@@ -1,29 +1,77 @@
+
 import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
 import './App.css';
-import Amplify, { API, graphqlOperation, Storage } from 'aws-amplify';
-import awsconfig from './aws-exports';
-import { AmplifySignOut, withAuthenticator } from '@aws-amplify/ui-react';
+import { Auth } from 'aws-amplify';
 import SongList from './components/songList/index'
-
-
-Amplify.configure(awsconfig)
+import { Button } from '@material-ui/core';
+import { Switch, Route, BrowserRouter as Router } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import Signin from './components/signIn/index';
 
 function App() {
 
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    AssessLoggedInState()
+  }, [])
+
+  const AssessLoggedInState = () => {
+    Auth.currentAuthenticatedUser()
+    .then(sess => {
+      setLoggedIn(true)
+    }).catch(() => {
+      setLoggedIn(false)
+    });
+  }
+
+  const signOut = async () => {
+    try {
+      await Auth.signOut();
+      setLoggedIn(false);
+    } catch (error) {
+      console.log('error signing out ', error);
+    }
+  };
+
+  const onSignIn = () => {
+    setLoggedIn(true);
+  }
 
   return (
-    <div className="App">
+    <Router>
+       <div className="App">
       <header className="App-header">
-       <AmplifySignOut />
+      { loggedIn ? (
+      <Button variant="contained" color="primary" onClick={signOut}>
+         Sign Out
+         </Button> ) : (
+           <Link to="signin"> <Button variant="contained" color="primary">
+           Sign In
+           </Button></Link> )} 
        <h2>My App Content</h2>
       </header>
-      <SongList />
+
+
+        <Route exact path="/">
+         <SongList />
+        </Route>
+        <Route exact path='/signin'> 
+          <Signin onSignIn={AssessLoggedInState}>
+            Sign In
+          </Signin>
+
+        </Route>
+    
+
+      
       
     </div>
+    </Router>
+   
   );
 }
 
-export default withAuthenticator(App);
+export default App;
 
 
